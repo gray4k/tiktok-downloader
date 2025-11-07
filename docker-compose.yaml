@@ -9,9 +9,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Mount your server's video folder into the container
       - /mnt/media/learn:/downloads
-      # Mount the app files (Flask code)
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
