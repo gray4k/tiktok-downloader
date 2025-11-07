@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  tiktok-downloader:
+    image: python:3.11
+    container_name: tiktok-downloader
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./app:/app
+      - /mnt/media/learn:/mnt/media/learn
+    ports:
+      - "5000:5000"
+    command: bash -c "pip install flask yt-dlp && python app.py"
