@@ -1,14 +1,18 @@
 version: '3.8'
+
 services:
   tiktok-downloader:
     image: python:3.11-slim
     container_name: tiktok-downloader
-    volumes:
-      - ./downloads:/downloads
-    ports:
-      - "5000:5000"
     working_dir: /app
     command: bash -c "pip install flask yt-dlp && python app.py"
-    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount your server's video folder into the container
+      - /mnt/media/learn:/downloads
+      # Mount the app files (Flask code)
+      - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+    restart: unless-stopped
