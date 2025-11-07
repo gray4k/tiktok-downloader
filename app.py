@@ -1,41 +1,32 @@
-from flask import Flask, request, render_template_string
-import subprocess
+from flask import Flask, request, jsonify
+import yt_dlp
 import os
 
 app = Flask(__name__)
+DOWNLOAD_DIR = "/mnt/media/learn"
 
-HTML = """
-<!DOCTYPE html>
-<html>
-  <head><title>TikTok Downloader</title></head>
-  <body style="font-family:Arial; padding:40px;">
-    <h2>TikTok Downloader</h2>
-    <form method="post" action="/download">
-      <textarea name="urls" rows="5" cols="80" placeholder="Paste TikTok URLs (one per line)"></textarea><br><br>
-      <button type="submit">Download</button>
-    </form>
-  </body>
-</html>
-"""
+@app.route("/download", methods=["POST"])
+def download_video():
+    data = request.get_json()
+    url = data.get("url")
 
-@app.route('/')
-def index():
-    return render_template_string(HTML)
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
 
-@app.route('/download', methods=['POST'])
-def download():
-    urls = request.form['urls'].strip().split('\n')
-    output_dir = '/downloads'
-    os.makedirs(output_dir, exist_ok=True)
+    try:
+        ydl_opts = {
+            "outtmpl": os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s"),
+            "format": "mp4",
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            return jsonify({"status": "success", "title": info.get("title")})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    results = []
-    for url in urls:
-        url = url.strip()
-        if url:
-            try:
-                cmd = ['yt-dlp', '-o', f'{output_dir}/%(title)s.%(ext)s', url]
-                subprocess.run(cmd, check=True)
-                results.append(f"✅ Downloaded: {url}")
-            except subprocess.CalledProcessError:
-                results.append(f"❌ Failed: {url}")
-    return "<br>".join(results)
+@app.route("/")
+def home():
+    return "✅ TikTok Downloader is running."
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
